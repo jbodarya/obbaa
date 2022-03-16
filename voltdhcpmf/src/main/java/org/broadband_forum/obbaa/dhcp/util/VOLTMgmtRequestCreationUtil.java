@@ -27,6 +27,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.util.HashMap;
+import java.util.Map;
 
 
 public final class VOLTMgmtRequestCreationUtil {
@@ -42,6 +43,26 @@ public final class VOLTMgmtRequestCreationUtil {
         Element nameLeaf = document.createElement(DhcpConstants.NAME);
         nameLeaf.setTextContent(onuDeviceName);
         createOnuNode.appendChild(nameLeaf);
+        document.appendChild(createOnuNode);
+        NetconfRpcRequest request = new NetconfRpcRequest();
+        request.setRpcInput(document.getDocumentElement());
+        return request;
+    }
+
+
+    public static NetconfRpcRequest prepareDHCPRequest(Map<String, String > map) {
+        Document document = DocumentUtils.createDocument();
+        String elementNS = DhcpConstants.BBF_VOMCI_FUNCTION_NS;
+        Element createOnuNode = document.createElementNS(elementNS, DhcpConstants.DHCP_VALUES);
+
+        map.forEach(
+                (k, v) -> {
+                    Element nameLeaf = document.createElement(k);
+                    nameLeaf.setTextContent(v);
+                    createOnuNode.appendChild(nameLeaf);
+                }
+        );
+
         document.appendChild(createOnuNode);
         NetconfRpcRequest request = new NetconfRpcRequest();
         request.setRpcInput(document.getDocumentElement());

@@ -24,6 +24,8 @@ package org.broadband_forum.obbaa.dhcp;
 public interface DhcpConstants {
 
     String CREATE_ONU = "create-onu";
+
+    String DHCP_VALUES = "dhcp-values";
     String DELETE_ONU = "delete-onu";
     String MANAGED_ONUS = "managed-onus";
     String MANAGED_ONU = "managed-onu";

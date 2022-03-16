@@ -17,7 +17,6 @@
 
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.4.0" name="${project.artifactId}-${project.version}">
     <feature name="${project.artifactId}" version="${project.version}" description="coded standard adapter feature">
-        <bundle>mvn:org.broadband_forum.obbaa/voltmf/${project.version}</bundle>
         <bundle>mvn:org.broadband-forum.obbaa/zyxel-adapter-sample/${project.version}</bundle>
     </feature>
 </features>

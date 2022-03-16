@@ -17,6 +17,7 @@ import org.broadband_forum.obbaa.dhcp.util.VOLTMgmtRequestCreationUtil;
 import org.broadband_forum.obbaa.dmyang.entities.Device;
 import org.broadband_forum.obbaa.netconf.alarm.api.AlarmService;
 import org.broadband_forum.obbaa.netconf.api.messages.AbstractNetconfRequest;
+import org.broadband_forum.obbaa.netconf.api.messages.EditConfigElement;
 import org.broadband_forum.obbaa.netconf.api.messages.EditConfigRequest;
 import org.broadband_forum.obbaa.netconf.api.messages.NetconfRpcRequest;
 import org.broadband_forum.obbaa.netconf.api.server.notification.NotificationService;
@@ -26,11 +27,17 @@ import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.datastore.ModelNode
 import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.support.utils.TxService;
 import org.broadband_forum.obbaa.nf.dao.NetworkFunctionDao;
 import org.broadband_forum.obbaa.pma.PmaRegistry;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
@@ -114,17 +121,17 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
         m_kafkaCommunicationPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(DhcpConstants.KAFKA_COMMUNICATION_THREADS);
 
         /* TODO below code is for test purpose only : remove before merge */
-        new Thread(() -> {
-            int i = 0;
-            while (true) {
-                sendDhcpTopics("device" + i++);
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+//        new Thread(() -> {
+//            int i = 0;
+//            while (true) {
+//                sendDhcpTopics("device" + i++);
+//                try {
+//                    Thread.sleep(10000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }).start();
 
     }
 
@@ -136,18 +143,18 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
     }
 
 
-    public void sendDhcpTopics(String onuDeviceName) {
+    public void sendDhcpTopics(Map<String, String> dhcpValues) {
 
         /* we required Network function name before procedding  !!!
         gere we can have a hook to publish kafka msg*/
 
-        NetconfRpcRequest rpcRequest = VOLTMgmtRequestCreationUtil.prepareCreateOnuRequest(onuDeviceName);
+        NetconfRpcRequest rpcRequest = VOLTMgmtRequestCreationUtil.prepareDHCPRequest(dhcpValues);
 
         LOGGER.debug("Prepared Create ONU RPC request " + rpcRequest.requestToString());
 
         // Object kafkaMessage = getFormattedKafkaMessage(rpcRequest, onuDeviceName, "DHCPAPP",
         //       "DHCPSUBSCRIBERDETAILS", ObjectType.VOLTMF, ONUConstants.CREATE_ONU);
-        Object kafkaMessage = getFormattedKafkaMessage(rpcRequest, onuDeviceName, "DHCPAPP",
+        Object kafkaMessage = getFormattedKafkaMessage(rpcRequest, dhcpValues.getOrDefault("bbf-xpongemtcont:name", "1"), "DHCPAPP",
                 "DHCPSUBSCRIBERDETAILS", ObjectType.VOLTMF, "rpc");
         if (kafkaMessage != null) {
 
@@ -225,5 +232,44 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
     public void processApplicationRequest(EditConfigRequest requeest) {
 
         LOGGER.info(String.format("Get request %s ,", requeest.requestToString()));
+
+
+        DocumentBuilder documentBuilder = null;
+        try {
+            documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Document document = documentBuilder.parse(requeest.requestToString());
+            NodeList nodeList = document.getElementsByTagName("bbf-xpongemtcont:traffic-descriptor-profile");
+
+            sendDhcpTopics(getElementsFromNodes(nodeList));
+
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
+
+    private static Map<String, String> getElementsFromNodes(NodeList nodeList) {
+        Map<String, String> listOfElements = new HashMap();
+
+        for (int count = 0; count < nodeList.getLength(); count++) {
+            Node tempNode = nodeList.item(count);
+            if (tempNode.getNodeType() == Node.ELEMENT_NODE && tempNode.hasChildNodes()) {
+                NodeList childNodeList = tempNode.getChildNodes();
+
+                for (int c = 0; c < childNodeList.getLength(); c++) {
+                    Node tempChildNode = childNodeList.item(c);
+                    if (tempChildNode.getNodeType() == Node.ELEMENT_NODE) {
+                        System.out.println("\nNode Name =" + tempChildNode.getNodeName());
+                        listOfElements.put(tempChildNode.getNodeName(),tempChildNode.getTextContent());
+                    }
+                }
+            }
+        }
+        return listOfElements;
+    }
+
 }
