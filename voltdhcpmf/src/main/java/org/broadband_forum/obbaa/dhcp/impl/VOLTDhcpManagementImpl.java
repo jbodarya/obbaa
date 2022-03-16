@@ -31,12 +31,14 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -237,7 +239,7 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
         DocumentBuilder documentBuilder = null;
         try {
             documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            Document document = documentBuilder.parse(requeest.requestToString());
+            Document document = documentBuilder.parse(new InputSource(new StringReader(requeest.requestToString())));
             NodeList nodeList = document.getElementsByTagName("bbf-xpongemtcont:traffic-descriptor-profile");
 
             sendDhcpTopics(getElementsFromNodes(nodeList));
@@ -263,7 +265,6 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
                 for (int c = 0; c < childNodeList.getLength(); c++) {
                     Node tempChildNode = childNodeList.item(c);
                     if (tempChildNode.getNodeType() == Node.ELEMENT_NODE) {
-                        System.out.println("\nNode Name =" + tempChildNode.getNodeName());
                         listOfElements.put(tempChildNode.getNodeName(),tempChildNode.getTextContent());
                     }
                 }
