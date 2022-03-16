@@ -17,6 +17,7 @@ import org.broadband_forum.obbaa.dhcp.util.VOLTMgmtRequestCreationUtil;
 import org.broadband_forum.obbaa.dmyang.entities.Device;
 import org.broadband_forum.obbaa.netconf.alarm.api.AlarmService;
 import org.broadband_forum.obbaa.netconf.api.messages.AbstractNetconfRequest;
+import org.broadband_forum.obbaa.netconf.api.messages.EditConfigRequest;
 import org.broadband_forum.obbaa.netconf.api.messages.NetconfRpcRequest;
 import org.broadband_forum.obbaa.netconf.api.server.notification.NotificationService;
 import org.broadband_forum.obbaa.netconf.api.util.NetconfMessageBuilderException;
@@ -218,5 +219,11 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
 //        } catch (MessageFormatterException e) {
 //            LOGGER.error(e.getMessage());
         }
+    }
+
+    @Override
+    public void processApplicationRequest(EditConfigRequest requeest) {
+
+        LOGGER.info(String.format("Get request %s ,", requeest.requestToString()));
     }
 }

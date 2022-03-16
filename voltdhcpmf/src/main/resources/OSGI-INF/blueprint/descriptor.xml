@@ -92,4 +92,6 @@
         <argument ref="networkFunctionDao"/>
     </bean>
 
+    <service ref="vOLTDhcpManagement" interface="org.broadband_forum.obbaa.dhcp.VOLTDhcpManagement"/>
+
 </blueprint>

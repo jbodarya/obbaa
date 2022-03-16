@@ -17,6 +17,7 @@
 package org.broadband_forum.obbaa.dhcp;
 
 import org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumer;
+import org.broadband_forum.obbaa.netconf.api.messages.EditConfigRequest;
 
 /**
  * <p>
@@ -37,4 +38,6 @@ public interface VOLTDhcpManagement {
     void networkFunctionRemoved(String networkFunctionName);
 
     void processNotification(Object notificationObject);
+
+    void processApplicationRequest(EditConfigRequest requeest);
 }
