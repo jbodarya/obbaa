@@ -76,6 +76,7 @@
         <argument ref="deviceManager"/>
         <argument ref="vOLTManagement"/>
         <argument ref="networkFunctionManager"/>
+        <argument ref="networkFunctionDao"/>
     </bean>
 
     <bean id="unknownOnuHandler" class="org.broadband_forum.obbaa.onu.UnknownONUHandler" >

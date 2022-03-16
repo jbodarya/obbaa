@@ -15,10 +15,22 @@
  */
 package org.broadband_forum.obbaa.nm.nwfunctionmgr;
 
+import org.broadband_forum.obbaa.nf.dao.NetworkFunctionDao;
+
+import java.util.List;
+
 public interface NetworkFunctionStateProvider {
 
     void networkFunctionAdded(String networkFunctionName);
 
     void networkFunctionRemoved(String networkFunctionName);
+
+    default boolean supports(String networkFunctionName, List<String> types, NetworkFunctionDao m_networkFunctionDao) {
+        return m_networkFunctionDao.getNetworkFunctions(networkFunctionName)
+                .stream()
+                .anyMatch(nf -> types
+                        .stream()
+                        .anyMatch(type -> nf.getType().equalsIgnoreCase(type)));
+    }
 
 }

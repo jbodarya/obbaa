@@ -17,10 +17,12 @@
 package org.broadband_forum.obbaa.nf.dao;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.broadband_forum.obbaa.nf.dao.impl.KafkaTopicPurpose;
 import org.broadband_forum.obbaa.nf.entities.KafkaTopic;
+import org.broadband_forum.obbaa.nf.entities.NetworkFunction;
 
 /**
  * <p>
@@ -34,5 +36,12 @@ public interface NetworkFunctionDao {
 
     Set<KafkaTopic> getKafkaConsumerTopics(String networkFunctionName);
 
+    Set<KafkaTopic> getKafkaConsumerTopics(String networkFunctionName, KafkaTopicPurpose kafkaTopicPurpose);
+
     String getLocalEndpointName(String networkFunctionName);
+
+    List<NetworkFunction> getNetworkFunctions (String networkFunctionName);
+
+    Set<String> getAllNetworkFunctionNames();
+
 }

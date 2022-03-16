@@ -36,6 +36,7 @@
         <module>aggregator</module>
         <module>nbi-adapter</module>
         <module>voltmf</module>
+        <module>voltdhcpmf</module>
         <module>baa-feature</module>
         <module>baa-dist</module>
         <module>library-consult</module>

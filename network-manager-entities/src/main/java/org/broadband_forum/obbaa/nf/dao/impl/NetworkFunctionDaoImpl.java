@@ -17,13 +17,10 @@
 package org.broadband_forum.obbaa.nf.dao.impl;
 
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import javax.transaction.Transactional;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.broadband_forum.obbaa.netconf.persistence.PersistenceManagerUtil;
 import org.broadband_forum.obbaa.netconf.persistence.jpa.JPAEntityDataStoreManager;
@@ -78,13 +75,37 @@ public class NetworkFunctionDaoImpl implements NetworkFunctionDao {
         return topicNames;
     }
 
-    private String getRemoteEndPointName(String networkFunctionName) {
+    @Override
+    public List<NetworkFunction> getNetworkFunctions (String networkFunctionName) {
+        List<NetworkFunction> networkFunctions = getNetworkFunctionList(networkFunctionName);
+        return CollectionUtils.isEmpty(networkFunctions) ? Collections.emptyList() :  networkFunctions;
+    }
+
+    @Override
+    public Set<String> getAllNetworkFunctionNames() {
+        List<NetworkFunction> networkFunctionList = m_persistenceManagerUtil.getEntityDataStoreManager().findAll(NetworkFunction.class);
+
+        Set<String> nfFunctionNamesSet = new HashSet<>();
+        for (NetworkFunction networkFunction : networkFunctionList) {
+            String nwFunctionName = networkFunction.getNetworkFunctionName();
+            if (nwFunctionName != null) {
+                nfFunctionNamesSet.add(nwFunctionName);
+            }
+        }
+        return nfFunctionNamesSet;
+    }
+
+    private List<NetworkFunction> getNetworkFunctionList(String networkFunctionName) {
         Map<String, Object> matchedValues = new HashMap<String, Object>();
-        String endpointName = null;
         matchedValues.put(JPAEntityDataStoreManager.buildQueryPath(NetworkFunctionNSConstants.NETWORK_FUNCTION_DB_NAME),
                 networkFunctionName);
-        List<NetworkFunction> networkFunctions = m_persistenceManagerUtil.getEntityDataStoreManager()
+        return m_persistenceManagerUtil.getEntityDataStoreManager()
                 .findByMatchValue(NetworkFunction.class, matchedValues);
+    }
+
+    private String getRemoteEndPointName(String networkFunctionName) {
+        String endpointName = null;
+        List<NetworkFunction> networkFunctions = getNetworkFunctionList(networkFunctionName);
         if (networkFunctions != null && !networkFunctions.isEmpty()) {
             endpointName = networkFunctions.get(0).getRemoteEndpointName();
         } else {
@@ -115,13 +136,13 @@ public class NetworkFunctionDaoImpl implements NetworkFunctionDao {
             if (kafkaAgent != null) {
                 KafkaAgentParameters kafkaAgentParameters = kafkaAgent.getKafkaAgentParameters();
                 if (kafkaAgentParameters != null) {
-                    if (kafkaTopicPurpose.equals(KafkaTopicPurpose.VOMCI_REQUEST)) {
+                    if (kafkaTopicPurpose.equals(KafkaTopicPurpose.VOMCI_REQUEST) || kafkaTopicPurpose.equals(KafkaTopicPurpose.DHCP_REQUEST)) {
                         KafkaPublicationParameters kafkaPublicationParameters = kafkaAgentParameters.getKafkaPublicationParameters();
                         if (kafkaPublicationParameters != null) {
                             kafkaTopics = kafkaPublicationParameters.getKafkaTopics();
                         } else {
                             LOGGER.error(String.format("kafka Publication Parameter for the network function %s and Kafka "
-                                            + "Topic purpose %s was not found", networkFunctionName, kafkaTopicPurpose));
+                                    + "Topic purpose %s was not found", networkFunctionName, kafkaTopicPurpose));
                         }
                     } else {
                         KafkaConsumptionParameters kafkaConsumptionParameters = kafkaAgentParameters.getKafkaConsumptionParameters();
@@ -129,7 +150,7 @@ public class NetworkFunctionDaoImpl implements NetworkFunctionDao {
                             kafkaTopics = kafkaConsumptionParameters.getKafkaTopics();
                         } else {
                             LOGGER.error(String.format("kafka Consumption Parameter for the network function %s and Kafka"
-                                        + " Topic purpose %s was not found", networkFunctionName, kafkaTopicPurpose));
+                                    + " Topic purpose %s was not found", networkFunctionName, kafkaTopicPurpose));
                         }
                     }
                 }
@@ -149,6 +170,19 @@ public class NetworkFunctionDaoImpl implements NetworkFunctionDao {
         }
         return kafkaTopicSet;
     }
+
+    @Override
+    public Set<KafkaTopic> getKafkaConsumerTopics(String networkFunctionName, KafkaTopicPurpose kafkaTopicPurpose) {
+        Set<KafkaTopic> kafkaTopicSet = new HashSet<>();
+        if (networkFunctionName != null) {
+            kafkaTopicSet = getKafkaTopics(networkFunctionName, kafkaTopicPurpose);
+            if (kafkaTopicSet == null || kafkaTopicSet.isEmpty()) {
+                LOGGER.error(String.format("kafkaConsumerTopics for the network function %s was not found", networkFunctionName));
+            }
+        }
+        return kafkaTopicSet;
+    }
+
 
     @Override
     @Transactional(value = Transactional.TxType.REQUIRED, rollbackOn = {RuntimeException.class})

@@ -119,5 +119,35 @@ module bbf-network-function-types {
     description
       "Virtual OLT management network function.";
   }
+
+  identity dolt-dhcpra-type {
+     base access-vnf-type;
+     description
+      "DHCP RA network function for D-OLT";
+  }
+
+  identity dolt-pppoeiatype {
+     base access-vnf-type;
+     description
+      "PPPoE IA network function for D-OLT";
+  }
+
+  identity dolt-igmp-type {
+     base access-vnf-type;
+     description
+      "IGMP networkfunction for D-OLT";
+  }
+
+  identity dolt-onuauthtype {
+     base access-vnf-type;
+     description
+      "ONU authenticationnetwork function for DOLT";
+  }
+
+  identity dolt-dba-type {
+     base access-vnf-type;
+     description
+      "Virtual DBA network function for D-D-OLT";
+  }
 }
 

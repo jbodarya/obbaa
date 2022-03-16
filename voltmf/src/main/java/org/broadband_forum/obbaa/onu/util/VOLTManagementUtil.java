@@ -71,6 +71,7 @@ import org.broadband_forum.obbaa.onu.ONUConstants;
 import org.broadband_forum.obbaa.onu.UnknownONUHandler;
 import org.broadband_forum.obbaa.onu.entity.UnknownONU;
 import org.broadband_forum.obbaa.onu.exception.MessageFormatterException;
+import org.broadband_forum.obbaa.onu.impl.SupportedKafkaTopicPurpose;
 import org.broadband_forum.obbaa.onu.kafka.consumer.OnuKafkaConsumer;
 import org.broadband_forum.obbaa.onu.kafka.producer.OnuKafkaProducer;
 import org.broadband_forum.obbaa.onu.message.GpbFormatter;
@@ -396,12 +397,17 @@ public final class VOLTManagementUtil {
     public static void updateKafkaSubscriptions(String vomciFunctionName, MessageFormatter messageFormatter, NetworkFunctionDao
             networkFunctionDao, OnuKafkaConsumer onuKafkaConsumer, Map<String, Set<String>> kafkaConsumerTopicMap) {
         if (messageFormatter instanceof GpbFormatter) {
-            Set<KafkaTopic> kafkaTopicSet = networkFunctionDao.getKafkaConsumerTopics(vomciFunctionName);
+            Set<KafkaTopic> kafkaTopicSet = networkFunctionDao.getKafkaConsumerTopics(vomciFunctionName, KafkaTopicPurpose.VOMCI_RESPONSE);
             Set<String> kafkaTopicNameSet = new HashSet<>();
             if (kafkaTopicSet != null && !kafkaTopicSet.isEmpty()) {
                 onuKafkaConsumer.updateSubscriberTopics(kafkaTopicSet);
                 for (KafkaTopic kafkaTopic : kafkaTopicSet) {
-                    kafkaTopicNameSet.add(kafkaTopic.getTopicName());
+                    if (SupportedKafkaTopicPurpose.getList().contains(kafkaTopic.getPurpose())) {
+                        LOGGER.info("topic is supported with vomci :" + kafkaTopic.getPurpose() + ",added");
+                        kafkaTopicNameSet.add(kafkaTopic.getTopicName());
+                    } else {
+                        LOGGER.info("topic is not supported with vomci :" + kafkaTopic.getPurpose() + ",not added");
+                    }
                 }
                 kafkaConsumerTopicMap.put(vomciFunctionName, kafkaTopicNameSet);
             }

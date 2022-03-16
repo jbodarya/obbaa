@@ -16,10 +16,14 @@
 
 package org.broadband_forum.obbaa.onu;
 
+import org.broadband_forum.obbaa.nf.dao.NetworkFunctionDao;
 import org.broadband_forum.obbaa.nm.devicemanager.DeviceManager;
 import org.broadband_forum.obbaa.nm.devicemanager.DeviceStateProvider;
 import org.broadband_forum.obbaa.nm.nwfunctionmgr.NetworkFunctionManager;
 import org.broadband_forum.obbaa.nm.nwfunctionmgr.NetworkFunctionStateProvider;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * <p>
@@ -32,13 +36,16 @@ public class MediatedDeviceEventListener implements DeviceStateProvider, Network
     private final DeviceManager m_deviceManager;
     private final VOLTManagement m_voltManagement;
     private final NetworkFunctionManager m_networkFunctionManager;
+    private final NetworkFunctionDao m_networkFunctionDao;
+    private static final List<String> types = Arrays.asList("bbf-nf-types:vomci-proxy-type", "bbf-nf-types:vomci-function-type");
+
 
     public MediatedDeviceEventListener(DeviceManager deviceManager, VOLTManagement voltManagement,
-                                       NetworkFunctionManager networkFunctionManager) {
+                                       NetworkFunctionManager networkFunctionManager, NetworkFunctionDao networkFunctionDao) {
         m_deviceManager = deviceManager;
         m_voltManagement = voltManagement;
         m_networkFunctionManager = networkFunctionManager;
-
+        m_networkFunctionDao = networkFunctionDao;
     }
 
     public void init() {
@@ -63,11 +70,15 @@ public class MediatedDeviceEventListener implements DeviceStateProvider, Network
 
     @Override
     public void networkFunctionAdded(String networkFunctionName) {
-        m_voltManagement.networkFunctionAdded(networkFunctionName);
+        if (supports(networkFunctionName, types, m_networkFunctionDao)) {
+            m_voltManagement.networkFunctionAdded(networkFunctionName);
+        }
     }
 
     @Override
     public void networkFunctionRemoved(String networkFunctionName) {
-        m_voltManagement.networkFunctionRemoved(networkFunctionName);
+        if (supports(networkFunctionName, types, m_networkFunctionDao)) {
+            m_voltManagement.networkFunctionRemoved(networkFunctionName);
+        }
     }
 }
