@@ -51,19 +51,28 @@ public final class VOLTMgmtRequestCreationUtil {
 
 
     public static NetconfRpcRequest prepareDHCPRequest(Map<String, String > map) {
+
         Document document = DocumentUtils.createDocument();
         String elementNS = DhcpConstants.BBF_VOMCI_FUNCTION_NS;
-        Element createOnuNode = document.createElementNS(elementNS, DhcpConstants.DHCP_VALUES);
+        Element dhcpValues = document.createElementNS(elementNS, DhcpConstants.DHCP_VALUES);
 
         map.forEach(
                 (k, v) -> {
                     Element nameLeaf = document.createElement(k);
                     nameLeaf.setTextContent(v);
-                    createOnuNode.appendChild(nameLeaf);
+                    dhcpValues.appendChild(nameLeaf);
                 }
         );
+        document.appendChild(dhcpValues);
 
-        document.appendChild(createOnuNode);
+
+//        map.forEach(
+//                (k, v ) -> {
+//                    appendElement(elementNS, document, dhcpValues, k, v);
+//                }
+//        );
+//        document.appendChild(dhcpValues);
+
         NetconfRpcRequest request = new NetconfRpcRequest();
         request.setRpcInput(document.getDocumentElement());
         return request;

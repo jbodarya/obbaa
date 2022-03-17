@@ -123,17 +123,22 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
         m_kafkaCommunicationPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(DhcpConstants.KAFKA_COMMUNICATION_THREADS);
 
         /* TODO below code is for test purpose only : remove before merge */
-//        new Thread(() -> {
-//            int i = 0;
-//            while (true) {
-//                sendDhcpTopics("device" + i++);
-//                try {
-//                    Thread.sleep(10000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }).start();
+
+        LOGGER.info("XXXXXXXXXXXXXXXXXXXXXX network function removed, removing the subscription");
+        new Thread(() -> {
+            int i = 0;
+            while (true) {
+                HashMap<String,String> m = new HashMap();
+                m.put("one "+i, "one");
+                m.put("two"+i, "two");
+                try {
+                    sendDhcpTopics(m);
+                    Thread.sleep(10000);
+                } catch (Exception e) {
+                    LOGGER.info(e);
+                }
+            }
+        }).start();
 
     }
 
@@ -147,12 +152,13 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
 
     public void sendDhcpTopics(Map<String, String> dhcpValues) {
 
+        LOGGER.info("XXXXXXXXXXXXXXXXXXXXXX send ving the subscription");
         /* we required Network function name before procedding  !!!
         gere we can have a hook to publish kafka msg*/
 
         NetconfRpcRequest rpcRequest = VOLTMgmtRequestCreationUtil.prepareDHCPRequest(dhcpValues);
 
-        LOGGER.debug("Prepared Create ONU RPC request " + rpcRequest.requestToString());
+        LOGGER.info("Prepared Create ONU RPC request " + rpcRequest.requestToString());
 
         // Object kafkaMessage = getFormattedKafkaMessage(rpcRequest, onuDeviceName, "DHCPAPP",
         //       "DHCPSUBSCRIBERDETAILS", ObjectType.VOLTMF, ONUConstants.CREATE_ONU);
