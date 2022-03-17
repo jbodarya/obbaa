@@ -129,8 +129,8 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
             int i = 0;
             while (true) {
                 HashMap<String,String> m = new HashMap();
-                m.put("one "+i, "one");
-                m.put("two"+i, "two");
+                m.put("one ", "one");
+                m.put("two", "two");
                 try {
                     sendDhcpTopics(m);
                     Thread.sleep(10000);

@@ -93,7 +93,9 @@ public interface DhcpConstants {
 
     String NETWORK_MANAGER_NAMESPACE = "urn:bbf:yang:obbaa:network-manager";
     String OBBAA_NETWORK_MANAGER = "bbf-obbaa-network-manager:network-manager";
-    String BBF_VOMCI_FUNCTION_NS = "urn:bbf:yang:bbf-vomci-function";
+    //String BBF_VOMCI_FUNCTION_NS = "urn:bbf:yang:bbf-vomci-function";
+    String BBF_VOMCI_FUNCTION_NS = "urn:bbf:yang:bbf-xpongemtcont";
+
     String SUBTREE_FILTER = "subtree";
     String MANAGED_DEVICES = "managed-devices";
     String DEVICE = "device";
