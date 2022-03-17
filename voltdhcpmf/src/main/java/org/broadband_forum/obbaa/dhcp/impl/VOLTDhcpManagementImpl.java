@@ -7,19 +7,16 @@ import org.apache.log4j.Logger;
 import org.broadband_forum.obbaa.connectors.sbi.netconf.NetconfConnectionManager;
 import org.broadband_forum.obbaa.device.adapter.AdapterManager;
 import org.broadband_forum.obbaa.dhcp.DhcpConstants;
+import org.broadband_forum.obbaa.dhcp.Entity;
 import org.broadband_forum.obbaa.dhcp.VOLTDhcpManagement;
 import org.broadband_forum.obbaa.dhcp.exception.MessageFormatterException;
 import org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumer;
 import org.broadband_forum.obbaa.dhcp.kafka.producer.DhcpKafkaProducer;
 import org.broadband_forum.obbaa.dhcp.message.*;
 import org.broadband_forum.obbaa.dhcp.util.VOLTManagementUtil;
-import org.broadband_forum.obbaa.dhcp.util.VOLTMgmtRequestCreationUtil;
 import org.broadband_forum.obbaa.dmyang.entities.Device;
 import org.broadband_forum.obbaa.netconf.alarm.api.AlarmService;
-import org.broadband_forum.obbaa.netconf.api.messages.AbstractNetconfRequest;
-import org.broadband_forum.obbaa.netconf.api.messages.EditConfigElement;
 import org.broadband_forum.obbaa.netconf.api.messages.EditConfigRequest;
-import org.broadband_forum.obbaa.netconf.api.messages.NetconfRpcRequest;
 import org.broadband_forum.obbaa.netconf.api.server.notification.NotificationService;
 import org.broadband_forum.obbaa.netconf.api.util.NetconfMessageBuilderException;
 import org.broadband_forum.obbaa.netconf.mn.fwk.schema.SchemaRegistry;
@@ -28,7 +25,6 @@ import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.support.utils.TxSer
 import org.broadband_forum.obbaa.nf.dao.NetworkFunctionDao;
 import org.broadband_forum.obbaa.pma.PmaRegistry;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -39,7 +35,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicLong;
@@ -124,21 +123,21 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
 
         /* TODO below code is for test purpose only : remove before merge */
 
-        LOGGER.info("XXXXXXXXXXXXXXXXXXXXXX network function removed, removing the subscription");
-        new Thread(() -> {
-            int i = 0;
-            while (true) {
-                HashMap<String,String> m = new HashMap();
-                m.put("one ", "one");
-                m.put("two", "two");
-                try {
-                    sendDhcpTopics(m);
-                    Thread.sleep(10000);
-                } catch (Exception e) {
-                    LOGGER.info(e);
-                }
-            }
-        }).start();
+        LOGGER.info("XXXXXXXXXXXXXXXXXXXXXX init ");
+//        new Thread(() -> {
+//            int i = 0;
+//            while (true) {
+//                HashMap<String,String> m = new HashMap();
+//                m.put("firstElement ", "one");
+//                m.put("secondElement", "two");
+//                try {
+//                    sendDhcpTopics(m);
+//                    Thread.sleep(10000);
+//                } catch (Exception e) {
+//                    LOGGER.info(e);
+//                }
+//            }
+//        }).start();
 
     }
 
@@ -156,13 +155,13 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
         /* we required Network function name before procedding  !!!
         gere we can have a hook to publish kafka msg*/
 
-        NetconfRpcRequest rpcRequest = VOLTMgmtRequestCreationUtil.prepareDHCPRequest(dhcpValues);
+        //NetconfRpcRequest rpcRequest = VOLTMgmtRequestCreationUtil.prepareDHCPRequest(dhcpValues);
 
-        LOGGER.info("Prepared Create ONU RPC request " + rpcRequest.requestToString());
+        Entity e = new Entity();
+        e.setValues(dhcpValues);
+        e.setEntityName("DHCP-ENTITY");
 
-        // Object kafkaMessage = getFormattedKafkaMessage(rpcRequest, onuDeviceName, "DHCPAPP",
-        //       "DHCPSUBSCRIBERDETAILS", ObjectType.VOLTMF, ONUConstants.CREATE_ONU);
-        Object kafkaMessage = getFormattedKafkaMessage(rpcRequest, dhcpValues.getOrDefault("bbf-xpongemtcont:name", "1"), "DHCPAPP",
+        Object kafkaMessage = getFormattedKafkaMessage(e, dhcpValues.getOrDefault("bbf-xpongemtcont:name", "onu"), "DHCPAPP",
                 "DHCPSUBSCRIBERDETAILS", ObjectType.VOLTMF, "rpc");
         if (kafkaMessage != null) {
 
@@ -176,20 +175,21 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
 
     }
 
-    private Object getFormattedKafkaMessage(AbstractNetconfRequest request, String onuDeviceName, String recepientName, String objectName,
+    private Object getFormattedKafkaMessage(Entity entity, String onuDeviceName, String recepientName, String objectName,
                                             ObjectType objectType, String operationType) {
         NetworkWideTag networkWideTag = new NetworkWideTag(onuDeviceName, recepientName, objectName, objectType);
         Device onuDevice = null;
         Object kafkaMessage = null;
-        VOLTManagementUtil.setMessageId(request, m_messageId);
+        VOLTManagementUtil.setMessageId(entity, m_messageId);
         try {
-            kafkaMessage = m_messageFormatter.getFormattedRequest(request, operationType, onuDevice,
+
+            kafkaMessage = m_messageFormatter.getFormattedRequest(entity, operationType, onuDevice,
                     m_adapterManager, m_modelNodeDSM, m_schemaRegistry, networkWideTag);
-            VOLTManagementUtil.registerInRequestMap(request, onuDeviceName, operationType);
+            VOLTManagementUtil.registerInRequestMap(entity, onuDeviceName, operationType);
         } catch (NetconfMessageBuilderException e) {
-            LOGGER.error(String.format("Failed to convert netconf request to json: %s", request.requestToString(), e));
+            LOGGER.error(String.format("Failed to convert netconf request to json: %s", entity.toString(), e));
         } catch (MessageFormatterException e) {
-            LOGGER.error(String.format("Failed to build GPB message from netconf request: %s", request.requestToString(), e));
+            LOGGER.error(String.format("Failed to build GPB message from netconf request: %s", entity.toString(), e));
         }
         return kafkaMessage;
     }

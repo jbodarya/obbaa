@@ -18,12 +18,12 @@ package org.broadband_forum.obbaa.dhcp.util;
 
 import org.broadband_forum.obbaa.connectors.sbi.netconf.NetconfConnectionManager;
 import org.broadband_forum.obbaa.dhcp.DhcpConstants;
+import org.broadband_forum.obbaa.dhcp.Entity;
 import org.broadband_forum.obbaa.dhcp.NotificationRequest;
 import org.broadband_forum.obbaa.dhcp.exception.MessageFormatterException;
 import org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumer;
 import org.broadband_forum.obbaa.dhcp.kafka.producer.DhcpKafkaProducer;
 import org.broadband_forum.obbaa.dhcp.message.GpbFormatter;
-import org.broadband_forum.obbaa.dhcp.message.JsonFormatter;
 import org.broadband_forum.obbaa.dhcp.message.MessageFormatter;
 import org.broadband_forum.obbaa.dhcp.message.ResponseData;
 import org.broadband_forum.obbaa.dmyang.dao.DeviceDao;
@@ -97,7 +97,7 @@ public class VOLTDhcpManagementUtilTest {
     @Mock
     ResponseData m_responseData;
     @Mock
-    AbstractNetconfRequest m_request;
+    Entity m_request;
     @Mock
     PmaRegistry m_pmaRegistry;
     @Mock
@@ -136,18 +136,6 @@ public class VOLTDhcpManagementUtilTest {
 
     }
 
-    @Test
-    public void testUpdateKafkaSubscriptionsJsonFormatter() {
-        Set<KafkaTopic> kafkaTopicSet = new HashSet<>();
-        kafkaTopicSet.add(m_kafkaTopic);
-        when(m_networkFunctionDao.getKafkaConsumerTopics("dhcp1")).thenReturn(kafkaTopicSet);
-        m_messageFormatter = new JsonFormatter();
-        VOLTManagementUtil.updateKafkaSubscriptions("dhcp1", m_messageFormatter, m_networkFunctionDao, m_dhcpKafkaConsumer,
-                m_kafkaConsumerTopicMap);
-        verify(m_dhcpKafkaConsumer, never()).updateSubscriberTopics(kafkaTopicSet);
-        verify(m_networkFunctionDao, never()).getKafkaConsumerTopics("dhcp1");
-
-    }
 
     @Test
     public void testRemoveSubscriptionsNoEntryInMap() {
@@ -170,19 +158,6 @@ public class VOLTDhcpManagementUtilTest {
         verify(m_dhcpKafkaConsumer, times(1)).removeSubscriberTopics(any());
     }
 
-    @Test
-    public void testUpdateOperationTypeInResponseDataJsonFormatter() {
-        m_messageFormatter = new JsonFormatter();
-        when(m_responseData.getIdentifier()).thenReturn("2");
-        when(m_request.getMessageId()).thenReturn("2");
-        VOLTManagementUtil.registerInRequestMap(m_request, ONU_NAME, DhcpConstants.CREATE_ONU);
-        ResponseData responseData = VOLTManagementUtil.updateOperationTypeInResponseData(m_responseData, m_messageFormatter);
-        verify(m_responseData, times(0)).setOnuName(ONU_NAME);
-        verify(m_responseData, times(0)).setOperationType(DhcpConstants.CREATE_ONU);
-        assertNotNull(responseData);
-        assertEquals(m_responseData, responseData);
-        VOLTManagementUtil.removeRequestFromMap("2");
-    }
 
     @Test
     public void testSendKafkaMessage() throws MessageFormatterException {

@@ -18,6 +18,7 @@ package org.broadband_forum.obbaa.dhcp.util;
 
 import org.apache.log4j.Logger;
 import org.broadband_forum.obbaa.dhcp.DhcpConstants;
+import org.broadband_forum.obbaa.dhcp.Entity;
 import org.broadband_forum.obbaa.dhcp.exception.MessageFormatterException;
 import org.broadband_forum.obbaa.dhcp.impl.SupportedDhcpKafkaTopicPurpose;
 import org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumer;
@@ -191,7 +192,7 @@ public final class VOLTManagementUtil {
         return responseData;
     }
 
-    public static void registerInRequestMap(AbstractNetconfRequest request, String deviceName, String operation) {
+    public static void registerInRequestMap(Entity request, String deviceName, String operation) {
         synchronized (LOCK) {
             m_requestMap.put(request.getMessageId(), new Pair<String, String>(deviceName, operation));
         }
@@ -203,7 +204,7 @@ public final class VOLTManagementUtil {
         }
     }
 
-    public static void setMessageId(AbstractNetconfRequest request, AtomicLong messageId) {
+    public static void setMessageId(Entity request, AtomicLong messageId) {
         final String currentMessageId = String.valueOf(messageId.addAndGet(1));
         request.setMessageId(currentMessageId);
     }

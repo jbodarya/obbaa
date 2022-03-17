@@ -17,9 +17,11 @@
 package org.broadband_forum.obbaa.dhcp.message;
 
 import com.google.protobuf.ByteString;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.broadband_forum.obbaa.device.adapter.AdapterManager;
 import org.broadband_forum.obbaa.dhcp.DhcpConstants;
+import org.broadband_forum.obbaa.dhcp.Entity;
 import org.broadband_forum.obbaa.dhcp.exception.MessageFormatterException;
 import org.broadband_forum.obbaa.dhcp.message.gpb.message.*;
 import org.broadband_forum.obbaa.dhcp.message.gpb.message.Header.OBJECT_TYPE;
@@ -34,6 +36,8 @@ import org.broadband_forum.obbaa.netconf.api.util.NetconfResources;
 import org.broadband_forum.obbaa.netconf.mn.fwk.schema.SchemaRegistry;
 import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.datastore.ModelNodeDataStoreManager;
 
+import java.util.Map;
+
 /**
  * <p>
  * Formatting messages to GPB format from XML or from GPB Format to XML
@@ -45,7 +49,7 @@ public class GpbFormatter implements MessageFormatter<Msg> {
     private static final String SENDER_NAME = DhcpConstants.VOLTDHCPMF_NAME;
 
     @Override
-    public Msg getFormattedRequest(AbstractNetconfRequest request,
+    public Msg getFormattedRequest(Entity e,
                                    String operationType,
                                    Device onuDevice,
                                    AdapterManager adapterManager,
@@ -60,7 +64,7 @@ public class GpbFormatter implements MessageFormatter<Msg> {
                 // below is not working : need to check 
 //                msg = getFormattedMessageForRpc((NetconfRpcRequest) request, onuDevice,
 //                        adapterManager, modelNodeDsm, networkWideTag);
-                msg = getFormattedMessageForRpc((NetconfRpcRequest) request, schemaRegistry,
+                msg = getFormattedMessageForRpc(e, schemaRegistry,
                         modelNodeDsm, networkWideTag);
                 break;
             default:
@@ -128,20 +132,22 @@ public class GpbFormatter implements MessageFormatter<Msg> {
     }
 
 
-    private Msg getFormattedMessageForRpc(NetconfRpcRequest request, SchemaRegistry schemaRegistry,
+    private Msg getFormattedMessageForRpc(Entity e, SchemaRegistry schemaRegistry,
                                           ModelNodeDataStoreManager modelNodeDsm,
                                           NetworkWideTag networkWideTag) throws NetconfMessageBuilderException {
-        String payload = XmlUtil.convertXmlToJson(schemaRegistry, modelNodeDsm,
-                DocumentUtils.documentToPrettyString(request.getRpcInput()));
+//        String payload = XmlUtil.convertXmlToJson(schemaRegistry, modelNodeDsm,
+//                DocumentUtils.documentToPrettyString(request.getRpcInput()));
+//
+        //String payload = StringUtils.join(map);
         return Msg.newBuilder()
-                .setHeader(buildHeader(request, networkWideTag))
-                .setBody(Body.newBuilder().setRequest(buildRpcRequest(payload)).build())
+                .setHeader(buildHeader(e, networkWideTag))
+                .setBody(Body.newBuilder().setRequest(buildRpcRequest(e.toString())).build())
                 .build();
     }
 
-    private Header buildHeader(AbstractNetconfRequest request, NetworkWideTag networkWideTag) {
+    private Header buildHeader(Entity e, NetworkWideTag networkWideTag) {
         return Header.newBuilder()
-                .setMsgId(request.getMessageId())
+                .setMsgId(e.getMessageId())
                 .setSenderName(SENDER_NAME)
                 .setRecipientName(networkWideTag.getRecipientName())
                 .setObjectType(OBJECT_TYPE.forNumber(networkWideTag.getObjectType().getCode()))

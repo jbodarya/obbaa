@@ -19,6 +19,7 @@ package org.broadband_forum.obbaa.dhcp.impl;
 import org.broadband_forum.obbaa.connectors.sbi.netconf.NetconfConnectionManager;
 import org.broadband_forum.obbaa.device.adapter.AdapterManager;
 import org.broadband_forum.obbaa.dhcp.DhcpConstants;
+import org.broadband_forum.obbaa.dhcp.Entity;
 import org.broadband_forum.obbaa.dhcp.exception.MessageFormatterException;
 import org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumer;
 import org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumerGpb;
@@ -152,7 +153,6 @@ public class VOLTDhcpManagementImplTest {
         MockitoAnnotations.initMocks(this);
         m_softwareImages = new SoftwareImages();
         m_txService = new TxService();
-        m_messageFormatter = new JsonFormatter();
         m_voltManagement = new VOLTDhcpManagementImpl(m_txService, m_alarmService, m_kafkaProducerJson,
                 m_connectionManager, m_modelNodeDSM, m_notificationService, m_adapterManager, m_pmaRegistry, m_schemaRegistry, m_messageFormatter, m_networkFunctionDao);
         m_voltManagement.setKafkaConsumer(m_dhcpKafkaConsumerJson);
@@ -243,22 +243,22 @@ public class VOLTDhcpManagementImplTest {
         verify(m_deviceManager, never()).updateSoftwareImageInOnuStateInfo(eq(deviceName), eq(softwareImageSet));
     }
 
-    @Test
-    @Ignore
-    public void testConvertActionMessage() throws NetconfMessageBuilderException, MessageFormatterException {
-        NetworkWideTag networkWideTag = new NetworkWideTag("onu", "olt", "1", "voltmf", null, "ONU", "Recipient", ObjectType.ONU);
-
-        when(m_vonuDevice.getDeviceName()).thenReturn(deviceName);
-        when(m_deviceManager.getDevice(deviceName)).thenReturn(m_vonuDevice);
-        when(m_adapterManager.getAdapterContext(any())).thenReturn(any());
-
-        ActionRequest actionRequest = generateActionRequest();
-        actionRequest.setMessageId("12");
-        GpbFormatter gpbFormatter = new GpbFormatter();
-        Msg msg = gpbFormatter.getFormattedRequest(eq(actionRequest), eq(NetconfResources.ACTION), eq(m_vonuDevice), eq(m_adapterManager), eq(m_modelNodeDSM), eq(m_schemaRegistry), eq(networkWideTag));
-        String payload = msg.getBody().getRequest().getAction().getInputData().toStringUtf8();
-        assertEquals(payload, VoltMFTestConstants.JSON_PAYLOAD_ACTION_REQUEST);
-    }
+//    @Test
+//    @Ignore
+//    public void testConvertActionMessage() throws NetconfMessageBuilderException, MessageFormatterException {
+//        NetworkWideTag networkWideTag = new NetworkWideTag("onu", "olt", "1", "voltmf", null, "ONU", "Recipient", ObjectType.ONU);
+//
+//        when(m_vonuDevice.getDeviceName()).thenReturn(deviceName);
+//        when(m_deviceManager.getDevice(deviceName)).thenReturn(m_vonuDevice);
+//        when(m_adapterManager.getAdapterContext(any())).thenReturn(any());
+//
+//        Entity actionRequest = generateActionRequest();
+//        actionRequest.setMessageId("12");
+//        GpbFormatter gpbFormatter = new GpbFormatter();
+//        Msg msg = gpbFormatter.getFormattedRequest(eq(actionRequest), eq(NetconfResources.ACTION), eq(m_vonuDevice), eq(m_adapterManager), eq(m_modelNodeDSM), eq(m_schemaRegistry), eq(networkWideTag));
+//        String payload = msg.getBody().getRequest().getAction().getInputData().toStringUtf8();
+//        assertEquals(payload, VoltMFTestConstants.JSON_PAYLOAD_ACTION_REQUEST);
+//    }
 
     private ActionRequest generateActionRequest() throws NetconfMessageBuilderException {
         String actionRequest = VoltMFTestConstants.XML_ACTION_REQUEST;
