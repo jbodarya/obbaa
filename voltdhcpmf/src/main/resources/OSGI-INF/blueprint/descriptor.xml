@@ -66,14 +66,7 @@
     <bean id="vOLTDhcpManagement" class="org.broadband_forum.obbaa.dhcp.impl.VOLTDhcpManagementImpl" init-method="init"
           destroy-method="destroy">
         <argument ref="txService"/>
-        <argument ref="alarmService"/>
         <argument ref="kafkaProducerGpb"/>
-        <argument ref="ncConnectionMgr"/>
-        <argument ref="aggregatedDSM"/>
-        <argument ref="notificationService"/>
-        <argument ref="adapterManager"/>
-        <argument ref="pmaRegistry"/>
-        <argument ref="schemaRegistry"/>
         <argument ref="gpbFormatter"/>
         <argument ref="networkFunctionDao"/>
     </bean>

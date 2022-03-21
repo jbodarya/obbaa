@@ -60,8 +60,4 @@ public class DeviceJsonUtils {
         return sr.getRpcDefinition(builder.build());
     }
 
-    public Element convertFromJsonToXmlSBI(String jsonData) throws NetconfMessageBuilderException {
-        return JsonUtil.convertFromJsonToXml(m_modelNodeDSM, new Pair<>(DhcpConstants.ONU_GET_OPERATION, null), new LinkedList<>(),
-                jsonData, m_schemaRegistry, null, null);
-    }
 }

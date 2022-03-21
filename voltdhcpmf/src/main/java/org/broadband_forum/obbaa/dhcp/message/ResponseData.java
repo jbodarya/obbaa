@@ -17,9 +17,8 @@ package org.broadband_forum.obbaa.dhcp.message;
 
 /**
  * <p>
- * Response information received from vomci function
+ * Response information received from dhcp
  * </p>
- * Created by Ranjitha B R (Nokia) on 13/05/2021.
  */
 public class ResponseData {
 

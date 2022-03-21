@@ -17,9 +17,7 @@
 package org.broadband_forum.obbaa.dhcp.util;
 
 import org.broadband_forum.obbaa.connectors.sbi.netconf.NetconfConnectionManager;
-import org.broadband_forum.obbaa.dhcp.DhcpConstants;
 import org.broadband_forum.obbaa.dhcp.Entity;
-import org.broadband_forum.obbaa.dhcp.NotificationRequest;
 import org.broadband_forum.obbaa.dhcp.exception.MessageFormatterException;
 import org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumer;
 import org.broadband_forum.obbaa.dhcp.kafka.producer.DhcpKafkaProducer;
@@ -28,7 +26,6 @@ import org.broadband_forum.obbaa.dhcp.message.MessageFormatter;
 import org.broadband_forum.obbaa.dhcp.message.ResponseData;
 import org.broadband_forum.obbaa.dmyang.dao.DeviceDao;
 import org.broadband_forum.obbaa.dmyang.entities.*;
-import org.broadband_forum.obbaa.netconf.api.messages.AbstractNetconfRequest;
 import org.broadband_forum.obbaa.netconf.api.server.notification.NotificationService;
 import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.support.utils.TxService;
 import org.broadband_forum.obbaa.netconf.server.util.TestUtil;
@@ -52,10 +49,6 @@ import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-//import org.broadband_forum.obbaa.dhcp.MediatedDeviceNetconfSession;
-//import org.broadband_forum.obbaa.dhcp.UnknownONUHandler;
-//import org.broadband_forum.obbaa.dhcp.entity.UnknownONU;
-//import org.broadband_forum.obbaa.dhcp.notification.ONUNotification;
 
 public class VOLTDhcpManagementUtilTest {
     private final String ONU_NAME = "onu1";
@@ -80,8 +73,6 @@ public class VOLTDhcpManagementUtilTest {
     DhcpKafkaConsumer m_dhcpKafkaConsumer;
     @Mock
     DhcpKafkaProducer m_dhcpKafkaProducer;
-    @Mock
-    NotificationRequest m_notificationRequest;
     @Mock
     Object m_notification;
     @Mock
@@ -116,10 +107,10 @@ public class VOLTDhcpManagementUtilTest {
         responseArray.add(true);
         responseArray.add(true);
         responseArray.add(true);
-        assertTrue(VOLTManagementUtil.isResponseOK(responseArray));
+        assertTrue(VOLTDhcpManagementUtil.isResponseOK(responseArray));
         responseArray.remove(0);
         responseArray.add(0, false);
-        assertFalse(VOLTManagementUtil.isResponseOK(responseArray));
+        assertFalse(VOLTDhcpManagementUtil.isResponseOK(responseArray));
 
     }
 
@@ -129,7 +120,7 @@ public class VOLTDhcpManagementUtilTest {
         kafkaTopicSet.add(m_kafkaTopic);
         when(m_networkFunctionDao.getKafkaConsumerTopics("dhcp1", KafkaTopicPurpose.DHCP_RESPONSE)).thenReturn(kafkaTopicSet);
         m_messageFormatter = new GpbFormatter();
-        VOLTManagementUtil.updateKafkaSubscriptions("dhcp1", m_messageFormatter, m_networkFunctionDao, m_dhcpKafkaConsumer,
+        VOLTDhcpManagementUtil.updateKafkaSubscriptions("dhcp1", m_messageFormatter, m_networkFunctionDao, m_dhcpKafkaConsumer,
                 m_kafkaConsumerTopicMap);
         verify(m_dhcpKafkaConsumer, times(1)).updateSubscriberTopics(kafkaTopicSet);
         verify(m_networkFunctionDao, times(1)).getKafkaConsumerTopics("dhcp1", KafkaTopicPurpose.DHCP_RESPONSE);
@@ -142,7 +133,7 @@ public class VOLTDhcpManagementUtilTest {
         Set<KafkaTopic> kafkaTopicSet = new HashSet<>();
         kafkaTopicSet.add(m_kafkaTopic);
         when(m_kafkaConsumerTopicMap.containsKey("dhcp1")).thenReturn(false);
-        VOLTManagementUtil.removeSubscriptions("dhcp1", m_dhcpKafkaConsumer, m_kafkaConsumerTopicMap);
+        VOLTDhcpManagementUtil.removeSubscriptions("dhcp1", m_dhcpKafkaConsumer, m_kafkaConsumerTopicMap);
         verify(m_dhcpKafkaConsumer, never()).removeSubscriberTopics(any());
     }
 
@@ -154,7 +145,7 @@ public class VOLTDhcpManagementUtilTest {
         kafkaTopicNameSet.add("dhcp1-request");
         when(m_kafkaConsumerTopicMap.containsKey("dhcp1")).thenReturn(true);
         when(m_kafkaConsumerTopicMap.get("dhcp1")).thenReturn(kafkaTopicNameSet);
-        VOLTManagementUtil.removeSubscriptions("dhcp1", m_dhcpKafkaConsumer, m_kafkaConsumerTopicMap);
+        VOLTDhcpManagementUtil.removeSubscriptions("dhcp1", m_dhcpKafkaConsumer, m_kafkaConsumerTopicMap);
         verify(m_dhcpKafkaConsumer, times(1)).removeSubscriberTopics(any());
     }
 
@@ -164,10 +155,10 @@ public class VOLTDhcpManagementUtilTest {
         final HashSet<String> kafkaTopicNamesFinal = new HashSet<>();
         kafkaTopicNamesFinal.add("dhcp1-request");
         when(m_networkFunctionDao.getKafkaTopicNames("dhcp1", KafkaTopicPurpose.DHCP_REQUEST)).thenReturn(kafkaTopicNamesFinal);
-        VOLTManagementUtil.sendKafkaMessage(m_notification, "dhcp1", m_txService, m_networkFunctionDao, m_dhcpKafkaProducer);
+        VOLTDhcpManagementUtil.sendKafkaMessage(m_notification, "dhcp1", m_txService, m_networkFunctionDao, m_dhcpKafkaProducer);
         verify(m_dhcpKafkaProducer, times(1)).sendNotification("dhcp1-request", m_notification);
         kafkaTopicNamesFinal.remove("dhcp1-request");
-        VOLTManagementUtil.sendKafkaMessage(m_notification, "dhcp1", m_txService, m_networkFunctionDao, m_dhcpKafkaProducer);
+        VOLTDhcpManagementUtil.sendKafkaMessage(m_notification, "dhcp1", m_txService, m_networkFunctionDao, m_dhcpKafkaProducer);
         verify(m_dhcpKafkaProducer, times(1)).sendNotification("dhcp1-request", m_notification);
     }
 
@@ -175,22 +166,22 @@ public class VOLTDhcpManagementUtilTest {
     public void testSendKafkaMessageWhenNoTopicPresent() throws MessageFormatterException {
         final HashSet<String> kafkaTopicNamesFinal = new HashSet<>();
         when(m_networkFunctionDao.getKafkaTopicNames("dhcp1", KafkaTopicPurpose.DHCP_REQUEST)).thenReturn(kafkaTopicNamesFinal);
-        VOLTManagementUtil.sendKafkaMessage(m_notification, "dhcp1", m_txService, m_networkFunctionDao, m_dhcpKafkaProducer);
+        VOLTDhcpManagementUtil.sendKafkaMessage(m_notification, "dhcp1", m_txService, m_networkFunctionDao, m_dhcpKafkaProducer);
         verify(m_dhcpKafkaProducer, times(0)).sendNotification("dhcp1-request", m_notification);
     }
 
     @Test
     public void testSetMessageId() {
         AtomicLong messageId = new AtomicLong(0);
-        VOLTManagementUtil.setMessageId(m_request, messageId);
+        VOLTDhcpManagementUtil.setMessageId(m_request, messageId);
         verify(m_request, times(1)).setMessageId("1");
-        VOLTManagementUtil.setMessageId(m_request, messageId);
+        VOLTDhcpManagementUtil.setMessageId(m_request, messageId);
         verify(m_request, times(1)).setMessageId("2");
     }
 
     @Test
     public void TestGenerateRandomMessageId() {
-        String messageId = VOLTManagementUtil.generateRandomMessageId();
+        String messageId = VOLTDhcpManagementUtil.generateRandomMessageId();
         assertNotNull(messageId);
     }
 

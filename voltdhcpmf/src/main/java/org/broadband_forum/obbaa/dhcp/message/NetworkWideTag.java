@@ -21,7 +21,6 @@ import java.util.HashMap;
 /**
  * <p>
  * Network wide tag containing information such as sender, recepient etc used for communication
- * between vOLTMF and vOMCI network functions
  * </p>
  * Created by Ranjitha.B.R (Nokia) on 13/05/2021.
  */

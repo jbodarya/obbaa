@@ -22,7 +22,6 @@ import org.json.JSONObject;
  * <p>
  * Utility to convert to JSON objects
  * </p>
- * Created by Ranjitha.B.R (Nokia) on 22/07/2020.
  */
 public class JsonKey implements Comparable<JsonKey> {
 

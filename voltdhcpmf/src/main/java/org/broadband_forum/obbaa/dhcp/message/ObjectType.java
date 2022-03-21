@@ -22,7 +22,6 @@ import java.util.Arrays;
  * <p>
  * Enum to help convert the object type between proto data and NetworkWideTag object
  * </p>
- * Created by Filipe Cláudio (Altice Labs) on 19/05/2021.
  */
 public enum ObjectType {
     ONU(0),

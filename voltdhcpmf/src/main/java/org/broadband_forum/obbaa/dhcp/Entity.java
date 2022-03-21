@@ -6,6 +6,14 @@ import java.util.Map;
 
 public class Entity {
 
+    public Entity () {
+    }
+
+    public Entity (String entityName, Map values) {
+        this.entityName = entityName;
+        this.values = values;
+    }
+
     @Override
     public String toString() {
         Entity e = new Entity();

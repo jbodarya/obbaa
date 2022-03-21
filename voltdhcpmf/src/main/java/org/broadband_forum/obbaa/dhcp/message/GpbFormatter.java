@@ -17,26 +17,16 @@
 package org.broadband_forum.obbaa.dhcp.message;
 
 import com.google.protobuf.ByteString;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.broadband_forum.obbaa.device.adapter.AdapterManager;
 import org.broadband_forum.obbaa.dhcp.DhcpConstants;
 import org.broadband_forum.obbaa.dhcp.Entity;
 import org.broadband_forum.obbaa.dhcp.exception.MessageFormatterException;
 import org.broadband_forum.obbaa.dhcp.message.gpb.message.*;
 import org.broadband_forum.obbaa.dhcp.message.gpb.message.Header.OBJECT_TYPE;
 import org.broadband_forum.obbaa.dhcp.message.gpb.message.Status.StatusCode;
-import org.broadband_forum.obbaa.dhcp.util.XmlUtil;
 import org.broadband_forum.obbaa.dmyang.entities.Device;
-import org.broadband_forum.obbaa.netconf.api.messages.AbstractNetconfRequest;
-import org.broadband_forum.obbaa.netconf.api.messages.NetconfRpcRequest;
-import org.broadband_forum.obbaa.netconf.api.util.DocumentUtils;
 import org.broadband_forum.obbaa.netconf.api.util.NetconfMessageBuilderException;
 import org.broadband_forum.obbaa.netconf.api.util.NetconfResources;
-import org.broadband_forum.obbaa.netconf.mn.fwk.schema.SchemaRegistry;
-import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.datastore.ModelNodeDataStoreManager;
-
-import java.util.Map;
 
 /**
  * <p>
@@ -52,20 +42,13 @@ public class GpbFormatter implements MessageFormatter<Msg> {
     public Msg getFormattedRequest(Entity e,
                                    String operationType,
                                    Device onuDevice,
-                                   AdapterManager adapterManager,
-                                   ModelNodeDataStoreManager modelNodeDsm,
-                                   SchemaRegistry schemaRegistry,
                                    NetworkWideTag networkWideTag) throws NetconfMessageBuilderException, MessageFormatterException {
 
         Msg msg = null;
-        // These operations can be sent to the ONU, vOMCI-Function or vOMCI-Proxy.
         switch (operationType) {
             case NetconfResources.RPC:
-                // below is not working : need to check 
-//                msg = getFormattedMessageForRpc((NetconfRpcRequest) request, onuDevice,
-//                        adapterManager, modelNodeDsm, networkWideTag);
-                msg = getFormattedMessageForRpc(e, schemaRegistry,
-                        modelNodeDsm, networkWideTag);
+
+                msg = getFormattedMessageForRpc(e, networkWideTag);
                 break;
             default:
                 LOGGER.warn("GpbFormatter didn't recognize the operation: " + operationType);
@@ -132,13 +115,8 @@ public class GpbFormatter implements MessageFormatter<Msg> {
     }
 
 
-    private Msg getFormattedMessageForRpc(Entity e, SchemaRegistry schemaRegistry,
-                                          ModelNodeDataStoreManager modelNodeDsm,
-                                          NetworkWideTag networkWideTag) throws NetconfMessageBuilderException {
-//        String payload = XmlUtil.convertXmlToJson(schemaRegistry, modelNodeDsm,
-//                DocumentUtils.documentToPrettyString(request.getRpcInput()));
-//
-        //String payload = StringUtils.join(map);
+    private Msg getFormattedMessageForRpc(Entity e, NetworkWideTag networkWideTag) {
+
         return Msg.newBuilder()
                 .setHeader(buildHeader(e, networkWideTag))
                 .setBody(Body.newBuilder().setRequest(buildRpcRequest(e.toString())).build())

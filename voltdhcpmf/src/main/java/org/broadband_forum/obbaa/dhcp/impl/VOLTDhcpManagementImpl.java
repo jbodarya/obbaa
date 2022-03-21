@@ -4,8 +4,6 @@
 package org.broadband_forum.obbaa.dhcp.impl;
 
 import org.apache.log4j.Logger;
-import org.broadband_forum.obbaa.connectors.sbi.netconf.NetconfConnectionManager;
-import org.broadband_forum.obbaa.device.adapter.AdapterManager;
 import org.broadband_forum.obbaa.dhcp.DhcpConstants;
 import org.broadband_forum.obbaa.dhcp.Entity;
 import org.broadband_forum.obbaa.dhcp.VOLTDhcpManagement;
@@ -13,17 +11,12 @@ import org.broadband_forum.obbaa.dhcp.exception.MessageFormatterException;
 import org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumer;
 import org.broadband_forum.obbaa.dhcp.kafka.producer.DhcpKafkaProducer;
 import org.broadband_forum.obbaa.dhcp.message.*;
-import org.broadband_forum.obbaa.dhcp.util.VOLTManagementUtil;
+import org.broadband_forum.obbaa.dhcp.util.VOLTDhcpManagementUtil;
 import org.broadband_forum.obbaa.dmyang.entities.Device;
-import org.broadband_forum.obbaa.netconf.alarm.api.AlarmService;
 import org.broadband_forum.obbaa.netconf.api.messages.EditConfigRequest;
-import org.broadband_forum.obbaa.netconf.api.server.notification.NotificationService;
 import org.broadband_forum.obbaa.netconf.api.util.NetconfMessageBuilderException;
-import org.broadband_forum.obbaa.netconf.mn.fwk.schema.SchemaRegistry;
-import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.datastore.ModelNodeDataStoreManager;
 import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.support.utils.TxService;
 import org.broadband_forum.obbaa.nf.dao.NetworkFunctionDao;
-import org.broadband_forum.obbaa.pma.PmaRegistry;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -35,7 +28,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -51,14 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
     private static final Logger LOGGER = Logger.getLogger(VOLTDhcpManagementImpl.class);
     private final TxService m_txService;
-    private final AlarmService m_alarmService;
     private final DhcpKafkaProducer m_kafkaProducer;
-    private final NetconfConnectionManager m_connectionManager;
-    private final ModelNodeDataStoreManager m_modelNodeDSM;
-    private final NotificationService m_notificationService;
-    private final AdapterManager m_adapterManager;
-    private final PmaRegistry m_pmaRegistry;
-    private final SchemaRegistry m_schemaRegistry;
     private ThreadPoolExecutor m_processNotificationResponsePool;
     private ThreadPoolExecutor m_processRequestResponsePool;
     private ThreadPoolExecutor m_processNotificationRequestPool;
@@ -67,28 +52,17 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
     private NetworkFunctionDao m_networkFunctionDao;
     private DhcpKafkaConsumer m_dhcpKafkaconsumer;
     private Map<String, Set<String>> m_kafkaConsumerTopicMap;
-    private Map<String, ArrayList<Boolean>> m_networkFunctionResponse;
     private AtomicLong m_messageId = new AtomicLong(0);
 
-    public VOLTDhcpManagementImpl(TxService txService, AlarmService alarmService,
+    public VOLTDhcpManagementImpl(TxService txService,
                                   DhcpKafkaProducer kafkaProducer,
-                                  NetconfConnectionManager connectionManager, ModelNodeDataStoreManager modelNodeDSM,
-                                  NotificationService notificationService, AdapterManager adapterManager,
-                                  PmaRegistry pmaRegistry, SchemaRegistry schemaRegistry, MessageFormatter messageFormatter,
+                                  MessageFormatter messageFormatter,
                                   NetworkFunctionDao networkFunctionDao) {
         m_txService = txService;
-        m_alarmService = alarmService;
         m_kafkaProducer = kafkaProducer;
-        this.m_connectionManager = connectionManager;
-        m_modelNodeDSM = modelNodeDSM;
-        m_notificationService = notificationService;
-        m_adapterManager = adapterManager;
-        m_pmaRegistry = pmaRegistry;
-        m_schemaRegistry = schemaRegistry;
         m_messageFormatter = messageFormatter;
         m_networkFunctionDao = networkFunctionDao;
         m_kafkaConsumerTopicMap = new HashMap<>();
-        m_networkFunctionResponse = new HashMap<>();
     }
 
 
@@ -105,14 +79,14 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
     @Override
     public void networkFunctionAdded(String networkFunctionName) {
         LOGGER.debug("network function added, updating the subscription");
-        VOLTManagementUtil.updateKafkaSubscriptions(networkFunctionName, m_messageFormatter, m_networkFunctionDao,
+        VOLTDhcpManagementUtil.updateKafkaSubscriptions(networkFunctionName, m_messageFormatter, m_networkFunctionDao,
                 m_dhcpKafkaconsumer, m_kafkaConsumerTopicMap);
     }
 
     @Override
     public void networkFunctionRemoved(String networkFunctionName) {
         LOGGER.debug("network function removed, removing the subscription");
-        VOLTManagementUtil.removeSubscriptions(networkFunctionName, m_dhcpKafkaconsumer, m_kafkaConsumerTopicMap);
+        VOLTDhcpManagementUtil.removeSubscriptions(networkFunctionName, m_dhcpKafkaconsumer, m_kafkaConsumerTopicMap);
     }
 
     public void init() {
@@ -151,15 +125,8 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
 
     public void sendDhcpTopics(Map<String, String> dhcpValues) {
 
-        LOGGER.info("XXXXXXXXXXXXXXXXXXXXXX send ving the subscription");
-        /* we required Network function name before procedding  !!!
-        gere we can have a hook to publish kafka msg*/
-
-        //NetconfRpcRequest rpcRequest = VOLTMgmtRequestCreationUtil.prepareDHCPRequest(dhcpValues);
-
-        Entity e = new Entity();
-        e.setValues(dhcpValues);
-        e.setEntityName("DHCP-ENTITY");
+        LOGGER.info("XXXXXXXXXXXXXXXXXXXXXX sending dhcp topic");
+        Entity e = new Entity("DHCP-ENTITY", dhcpValues);
 
         Object kafkaMessage = getFormattedKafkaMessage(e, dhcpValues.getOrDefault("bbf-xpongemtcont:name", "onu"), "DHCPAPP",
                 "DHCPSUBSCRIBERDETAILS", ObjectType.VOLTMF, "rpc");
@@ -168,24 +135,24 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
 
             //m_networkFunctionDao.getAllNetworkFunctionNames()
             m_networkFunctionDao.getAllNetworkFunctionNames().forEach(nf -> {
-                VOLTManagementUtil.sendKafkaMessage(kafkaMessage, nf,
+                VOLTDhcpManagementUtil.sendKafkaMessage(kafkaMessage, nf,
                         m_txService, m_networkFunctionDao, m_kafkaProducer);
             });
         }
 
     }
 
-    private Object getFormattedKafkaMessage(Entity entity, String onuDeviceName, String recepientName, String objectName,
+    private Object getFormattedKafkaMessage(Entity entity, String deviceName, String recepientName, String objectName,
                                             ObjectType objectType, String operationType) {
-        NetworkWideTag networkWideTag = new NetworkWideTag(onuDeviceName, recepientName, objectName, objectType);
+        NetworkWideTag networkWideTag = new NetworkWideTag(deviceName, recepientName, objectName, objectType);
         Device onuDevice = null;
         Object kafkaMessage = null;
-        VOLTManagementUtil.setMessageId(entity, m_messageId);
+        VOLTDhcpManagementUtil.setMessageId(entity, m_messageId);
         try {
 
-            kafkaMessage = m_messageFormatter.getFormattedRequest(entity, operationType, onuDevice,
-                    m_adapterManager, m_modelNodeDSM, m_schemaRegistry, networkWideTag);
-            VOLTManagementUtil.registerInRequestMap(entity, onuDeviceName, operationType);
+            kafkaMessage = m_messageFormatter.getFormattedRequest(entity, operationType, onuDevice
+                    ,networkWideTag);
+            VOLTDhcpManagementUtil.registerInRequestMap(entity, deviceName, operationType);
         } catch (NetconfMessageBuilderException e) {
             LOGGER.error(String.format("Failed to convert netconf request to json: %s", entity.toString(), e));
         } catch (MessageFormatterException e) {
@@ -202,7 +169,7 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
            // VOLTManagementUtil.removeRequestFromMap(identifier);
 
             ResponseData initialResponseData = m_messageFormatter.getResponseData(responseObject);
-            ResponseData responseData = VOLTManagementUtil.updateOperationTypeInResponseData(initialResponseData, m_messageFormatter);
+            ResponseData responseData = VOLTDhcpManagementUtil.updateOperationTypeInResponseData(initialResponseData, m_messageFormatter);
 //            if (responseData != null) {
             m_processRequestResponsePool.execute(() -> {
                 processRequestResponse(responseData);
@@ -241,8 +208,7 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
 
         LOGGER.info(String.format("Get request %s ,", requeest.requestToString()));
 
-
-        DocumentBuilder documentBuilder = null;
+        DocumentBuilder documentBuilder;
         try {
             documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document document = documentBuilder.parse(new InputSource(new StringReader(requeest.requestToString())));

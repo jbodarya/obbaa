@@ -21,7 +21,7 @@ import org.broadband_forum.obbaa.netconf.api.messages.EditConfigRequest;
 
 /**
  * <p>
- * Provides APIs to manage vOMCI based ONUs such as CRUD operations on ONUs and notification handling
+ * Provides APIs such as CRUD operations and notification handling
  * </p>
  */
 public interface VOLTDhcpManagement {
