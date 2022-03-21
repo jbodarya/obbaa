@@ -25,13 +25,14 @@ import org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumer;
 import org.broadband_forum.obbaa.dhcp.kafka.producer.DhcpKafkaProducer;
 import org.broadband_forum.obbaa.dhcp.message.GpbFormatter;
 import org.broadband_forum.obbaa.dhcp.message.MessageFormatter;
-import org.broadband_forum.obbaa.dhcp.message.ResponseData;
 import org.broadband_forum.obbaa.netconf.api.util.Pair;
 import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.support.utils.TxService;
 import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.support.utils.TxTemplate;
 import org.broadband_forum.obbaa.nf.dao.NetworkFunctionDao;
 import org.broadband_forum.obbaa.nf.dao.impl.KafkaTopicPurpose;
 import org.broadband_forum.obbaa.nf.entities.KafkaTopic;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -41,7 +42,6 @@ public final class VOLTDhcpManagementUtil {
     private static final Logger LOGGER = Logger.getLogger(VOLTDhcpManagementUtil.class);
     private static final Object LOCK = new Object();
     private static Map<String, Pair<String, String>> m_requestMap = new HashMap<>();
-    private static Map<String, ArrayList<String>> m_networkFunctionMap = new HashMap<>();
 
     private VOLTDhcpManagementUtil() {
         //Not called
@@ -55,7 +55,7 @@ public final class VOLTDhcpManagementUtil {
 
 
     public static boolean isResponseOK(ArrayList<Boolean> respArray) {
-        return (respArray == null || respArray.isEmpty() || respArray.contains(false)) ? false : true;
+        return respArray != null && !respArray.isEmpty() && !respArray.contains(false);
     }
 
     public static void updateKafkaSubscriptions(String vomciFunctionName, MessageFormatter messageFormatter, NetworkFunctionDao
@@ -100,15 +100,6 @@ public final class VOLTDhcpManagementUtil {
         }
     }
 
-    public static ResponseData updateOperationTypeInResponseData(ResponseData responseData, MessageFormatter messageFormatter) {
-        if (messageFormatter instanceof GpbFormatter) {
-            String identifier = responseData.getIdentifier();
-//            if (responseData.getOperationType().equals(NetconfResources.RPC)
-//            }
-        }
-        return responseData;
-    }
-
     public static void registerInRequestMap(Entity request, String deviceName, String operation) {
         synchronized (LOCK) {
             m_requestMap.put(request.getMessageId(), new Pair<>(deviceName, operation));
@@ -151,5 +142,24 @@ public final class VOLTDhcpManagementUtil {
                 }
             }
         }
+    }
+
+    public static Map<String, String> getElementsFromNodes(NodeList nodeList) {
+        Map<String, String> listOfElements = new HashMap();
+
+        for (int count = 0; count < nodeList.getLength(); count++) {
+            Node tempNode = nodeList.item(count);
+            if (tempNode.getNodeType() == Node.ELEMENT_NODE && tempNode.hasChildNodes()) {
+                NodeList childNodeList = tempNode.getChildNodes();
+
+                for (int c = 0; c < childNodeList.getLength(); c++) {
+                    Node tempChildNode = childNodeList.item(c);
+                    if (tempChildNode.getNodeType() == Node.ELEMENT_NODE) {
+                        listOfElements.put(tempChildNode.getNodeName(), tempChildNode.getTextContent());
+                    }
+                }
+            }
+        }
+        return listOfElements;
     }
 }

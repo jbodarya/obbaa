@@ -42,7 +42,7 @@ public class GpbFormatter implements MessageFormatter<Msg> {
     public Msg getFormattedRequest(Entity e,
                                    String operationType,
                                    Device onuDevice,
-                                   NetworkWideTag networkWideTag) throws NetconfMessageBuilderException, MessageFormatterException {
+                                   NetworkWideTag networkWideTag) throws MessageFormatterException {
 
         Msg msg = null;
         switch (operationType) {

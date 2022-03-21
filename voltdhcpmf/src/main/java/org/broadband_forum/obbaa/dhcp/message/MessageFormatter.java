@@ -30,7 +30,7 @@ public interface MessageFormatter<T> {
 
     T getFormattedRequest(Entity request, String operationType, Device onuDevice,
                           NetworkWideTag networkWideTag)
-            throws NetconfMessageBuilderException, MessageFormatterException;
+            throws MessageFormatterException;
 
     ResponseData getResponseData(Object responseObject) throws MessageFormatterException;
 }

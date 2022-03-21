@@ -13,12 +13,10 @@ import org.broadband_forum.obbaa.dhcp.kafka.producer.DhcpKafkaProducer;
 import org.broadband_forum.obbaa.dhcp.message.*;
 import org.broadband_forum.obbaa.dhcp.util.VOLTDhcpManagementUtil;
 import org.broadband_forum.obbaa.dmyang.entities.Device;
-import org.broadband_forum.obbaa.netconf.api.messages.EditConfigRequest;
-import org.broadband_forum.obbaa.netconf.api.util.NetconfMessageBuilderException;
+import org.broadband_forum.obbaa.netconf.api.messages.AbstractNetconfRequest;
 import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.support.utils.TxService;
 import org.broadband_forum.obbaa.nf.dao.NetworkFunctionDao;
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -151,10 +149,8 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
         try {
 
             kafkaMessage = m_messageFormatter.getFormattedRequest(entity, operationType, onuDevice
-                    ,networkWideTag);
+                    , networkWideTag);
             VOLTDhcpManagementUtil.registerInRequestMap(entity, deviceName, operationType);
-        } catch (NetconfMessageBuilderException e) {
-            LOGGER.error(String.format("Failed to convert netconf request to json: %s", entity.toString(), e));
         } catch (MessageFormatterException e) {
             LOGGER.error(String.format("Failed to build GPB message from netconf request: %s", entity.toString(), e));
         }
@@ -165,19 +161,18 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
     public void processResponse(Object responseObject) {
         try { /* the callback function is here to process the response */
 
-            /* need to remove identifier, once get the response */
-           // VOLTManagementUtil.removeRequestFromMap(identifier);
+            ResponseData responseData = m_messageFormatter.getResponseData(responseObject);
 
-            ResponseData initialResponseData = m_messageFormatter.getResponseData(responseObject);
-            ResponseData responseData = VOLTDhcpManagementUtil.updateOperationTypeInResponseData(initialResponseData, m_messageFormatter);
-//            if (responseData != null) {
-            m_processRequestResponsePool.execute(() -> {
-                processRequestResponse(responseData);
-            });
-//                }
-//            } else {
-//                LOGGER.error("Error while processing response. Response Data could not be formed ");
-//            }
+            LOGGER.info(String.format("respose of identifier [%s] with status [%s] and error: %s ,"
+                    , responseData.getIdentifier(), responseData.getResponseStatus(), responseData.getFailureReason()));
+
+            if (responseData != null) {
+                m_processRequestResponsePool.execute(() -> {
+                    processRequestResponse(responseData);
+                });
+            } else {
+                LOGGER.error("Error while processing response. Response Data could not be formed ");
+            }
         } catch (MessageFormatterException e) {
             LOGGER.error(e.getMessage());
         }
@@ -188,8 +183,7 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
     }
 
     protected void processRequestResponse(ResponseData responseData) {
-
-        //        VOLTManagementUtil.removeRequestFromMap(identifier);
+        VOLTDhcpManagementUtil.removeRequestFromMap(responseData.getIdentifier());
 
     }
 
@@ -204,45 +198,20 @@ public class VOLTDhcpManagementImpl implements VOLTDhcpManagement {
     }
 
     @Override
-    public void processApplicationRequest(EditConfigRequest requeest) {
+    public void processApplicationRequest(AbstractNetconfRequest request) {
 
-        LOGGER.info(String.format("Get request %s ,", requeest.requestToString()));
+        LOGGER.info(String.format("Get request %s ,", request.requestToString()));
 
         DocumentBuilder documentBuilder;
         try {
             documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            Document document = documentBuilder.parse(new InputSource(new StringReader(requeest.requestToString())));
+            Document document = documentBuilder.parse(new InputSource(new StringReader(request.requestToString())));
             NodeList nodeList = document.getElementsByTagName("bbf-xpongemtcont:traffic-descriptor-profile");
 
-            sendDhcpTopics(getElementsFromNodes(nodeList));
+            sendDhcpTopics(VOLTDhcpManagementUtil.getElementsFromNodes(nodeList));
 
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            LOGGER.error(e.getMessage());
         }
-
     }
-
-    private static Map<String, String> getElementsFromNodes(NodeList nodeList) {
-        Map<String, String> listOfElements = new HashMap();
-
-        for (int count = 0; count < nodeList.getLength(); count++) {
-            Node tempNode = nodeList.item(count);
-            if (tempNode.getNodeType() == Node.ELEMENT_NODE && tempNode.hasChildNodes()) {
-                NodeList childNodeList = tempNode.getChildNodes();
-
-                for (int c = 0; c < childNodeList.getLength(); c++) {
-                    Node tempChildNode = childNodeList.item(c);
-                    if (tempChildNode.getNodeType() == Node.ELEMENT_NODE) {
-                        listOfElements.put(tempChildNode.getNodeName(),tempChildNode.getTextContent());
-                    }
-                }
-            }
-        }
-        return listOfElements;
-    }
-
 }
