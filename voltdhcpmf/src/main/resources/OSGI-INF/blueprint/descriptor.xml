@@ -45,6 +45,8 @@
                availability="mandatory"/>
     <reference id="networkFunctionManager" interface="org.broadband_forum.obbaa.nm.nwfunctionmgr.NetworkFunctionManager"
                availability="mandatory"/>
+    <reference id="requestFunctionManager" interface="org.broadband_forum.obbaa.nm.requestmanager.RequestFunctionManager"
+               availability="mandatory"/>
 
     <!--<bean id="kafkaProducerJson" class="org.broadband_forum.obbaa.dhcp.kafka.producer.DhcpKafkaProducerJson" init-method="init" destroy-method="destroy">
         <argument ref="blueprintBundle"/>
@@ -76,6 +78,8 @@
         <argument ref="vOLTDhcpManagement"/>
         <argument ref="networkFunctionManager"/>
         <argument ref="networkFunctionDao"/>
+        <argument ref="requestFunctionManager"/>
+
     </bean>
 
     <bean id="dhcpKafkaConsumerGpb" class="org.broadband_forum.obbaa.dhcp.kafka.consumer.DhcpKafkaConsumerGpb"

@@ -453,4 +453,8 @@
     </service>
     <service ref="jpaModelServiceDeployer" interface="org.broadband_forum.obbaa.netconf.mn.fwk.server.model.service.ModelServiceDeployer"/>
     <service ref="networkFunctionManager" interface="org.broadband_forum.obbaa.nm.nwfunctionmgr.NetworkFunctionManager"/>
+
+    <bean id="requestFunctionManager" class="org.broadband_forum.obbaa.nm.requestmanager.impl.RequestFunctionManager"> </bean>
+    <service ref="requestFunctionManager" interface="org.broadband_forum.obbaa.nm.requestmanager.RequestFunctionManager"/>
+
 </blueprint>

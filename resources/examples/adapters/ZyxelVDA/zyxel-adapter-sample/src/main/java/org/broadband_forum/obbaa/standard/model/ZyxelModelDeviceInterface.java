@@ -42,6 +42,7 @@ import org.broadband_forum.obbaa.netconf.api.util.DocumentUtils;
 import org.broadband_forum.obbaa.netconf.api.util.NetconfMessageBuilderException;
 import org.broadband_forum.obbaa.netconf.api.util.Pair;
 import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.SubSystemValidationException;
+import org.broadband_forum.obbaa.nm.requestmanager.RequestFunctionManager;
 import org.opendaylight.yangtools.yang.common.QName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,12 +60,18 @@ import java.util.concurrent.Future;
 public class ZyxelModelDeviceInterface implements DeviceInterface {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZyxelModelDeviceInterface.class);
     private NetconfConnectionManager m_ncm;
-    private VOLTDhcpManagement voltManagement;
+   // private VOLTDhcpManagement voltManagement;
+    private RequestFunctionManager requestFunctionManager;
     public static final String IETF_ALARM_NS = "urn:ietf:params:xml:ns:yang:ietf-alarms";
 
-    public ZyxelModelDeviceInterface(NetconfConnectionManager ncm,VOLTDhcpManagement voltManagement) {
+//    public ZyxelModelDeviceInterface(NetconfConnectionManager ncm,VOLTDhcpManagement voltManagement) {
+//        this.m_ncm = ncm;
+//        this.voltManagement=voltManagement;
+//    }
+
+    public ZyxelModelDeviceInterface(NetconfConnectionManager ncm, RequestFunctionManager requestFunctionManager) {
         this.m_ncm = ncm;
-        this.voltManagement=voltManagement;
+        this.requestFunctionManager = requestFunctionManager;
     }
 
     @Override
@@ -77,7 +84,8 @@ public class ZyxelModelDeviceInterface implements DeviceInterface {
             List<Element> configElementList = editConfigElement.getConfigElementContents();
             for (int i = 0; i < configElementList.size(); i++) {
                 if (configElementList.get(i).getNodeName().contains("bbf-xpongemtcont:xpongemtcont")) {
-                    voltManagement.processApplicationRequest(request);
+                    //voltManagement.processApplicationRequest(request);
+                    requestFunctionManager.addRequest(request);
                     break;
                 }
             }
@@ -91,8 +99,6 @@ public class ZyxelModelDeviceInterface implements DeviceInterface {
     public Pair<AbstractNetconfRequest, Future<NetConfResponse>> forceAlign(Device device, NetConfResponse getConfigResponse)
             throws NetconfMessageBuilderException, ExecutionException {
 
-        // if it is infra call -> voltmf.test (infra call);
-        voltManagement.test();
         if (m_ncm.isConnected(device)) {
             LOGGER.info(String.format("Inside My Adapter : %s", device.getDeviceName()));
             CopyConfigRequest ccRequest = new CopyConfigRequest();

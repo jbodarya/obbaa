@@ -16,9 +16,12 @@
 
 package org.broadband_forum.obbaa.dhcp;
 
+import org.broadband_forum.obbaa.netconf.api.messages.AbstractNetconfRequest;
 import org.broadband_forum.obbaa.nf.dao.NetworkFunctionDao;
 import org.broadband_forum.obbaa.nm.nwfunctionmgr.NetworkFunctionManager;
 import org.broadband_forum.obbaa.nm.nwfunctionmgr.NetworkFunctionStateProvider;
+import org.broadband_forum.obbaa.nm.requestmanager.RequestFunctionManager;
+import org.broadband_forum.obbaa.nm.requestmanager.RequestStateProvider;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,27 +31,33 @@ import java.util.List;
  * Listens to events such as device addition and deletion from mediated devices
  * </p>
  */
-public class MediateDhcpNetworkEventListener implements NetworkFunctionStateProvider {
+public class MediateDhcpNetworkEventListener implements NetworkFunctionStateProvider, RequestStateProvider {
 
     private final VOLTDhcpManagement m_voltDhcpManagement;
     private final NetworkFunctionManager m_networkFunctionManager;
+    private final RequestFunctionManager m_requestFunctionManager;
     private final NetworkFunctionDao m_networkFunctionDao;
     private static final List<String> types = Arrays.asList("bbf-nf-types:dolt-dhcpra-type");
 
     public MediateDhcpNetworkEventListener(VOLTDhcpManagement voltDhcpManagement,
-                                           NetworkFunctionManager networkFunctionManager, NetworkFunctionDao networkFunctionDao) {
+                                           NetworkFunctionManager networkFunctionManager,
+                                           NetworkFunctionDao networkFunctionDao,
+                                           RequestFunctionManager requestFunctionManager) {
         m_voltDhcpManagement = voltDhcpManagement;
         m_networkFunctionManager = networkFunctionManager;
         m_networkFunctionDao = networkFunctionDao;
+        m_requestFunctionManager = requestFunctionManager;
 
     }
 
     public void init() {
         m_networkFunctionManager.addNetworkFunctionStateProvider(this);
+        m_requestFunctionManager.addRequestFunctionStateProvider(this);
     }
 
     public void destroy() {
         m_networkFunctionManager.removeNetworkFunctionStateProvider(this);
+        m_requestFunctionManager.removeRequestFunctionStateProvider(this);
     }
 
     @Override
@@ -63,5 +72,20 @@ public class MediateDhcpNetworkEventListener implements NetworkFunctionStateProv
         if (supports(networkFunctionName, types, m_networkFunctionDao)) {
             m_voltDhcpManagement.networkFunctionRemoved(networkFunctionName);
         }
+    }
+
+    @Override
+    public void addRequest(AbstractNetconfRequest request) {
+        m_voltDhcpManagement.processApplicationRequest(request);
+    }
+
+    @Override
+    public void delRequest(AbstractNetconfRequest request) {
+
+    }
+
+    @Override
+    public boolean supports(AbstractNetconfRequest request) {
+        return true;
     }
 }

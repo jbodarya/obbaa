@@ -45,9 +45,14 @@
             <artifactId>baa-maven-plugin</artifactId>
             <version>${project.version}</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.broadband-forum.obbaa</groupId>-->
+<!--            <artifactId>voltdhcpmf</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>org.broadband-forum.obbaa</groupId>
-            <artifactId>voltdhcpmf</artifactId>
+            <artifactId>network-manager</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
