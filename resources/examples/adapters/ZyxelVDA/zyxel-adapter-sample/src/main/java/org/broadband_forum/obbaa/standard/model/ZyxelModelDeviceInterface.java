@@ -17,40 +17,21 @@
 package org.broadband_forum.obbaa.standard.model;
 
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadband_forum.obbaa.connectors.sbi.netconf.NetconfConnectionManager;
 import org.broadband_forum.obbaa.device.adapter.DeviceInterface;
 import org.broadband_forum.obbaa.dmyang.entities.ConnectionState;
 import org.broadband_forum.obbaa.dmyang.entities.Device;
-import org.broadband_forum.obbaa.netconf.alarm.util.AlarmConstants;
-import org.broadband_forum.obbaa.netconf.api.messages.AbstractNetconfRequest;
-import org.broadband_forum.obbaa.netconf.api.messages.CopyConfigRequest;
-import org.broadband_forum.obbaa.netconf.api.messages.EditConfigElement;
-import org.broadband_forum.obbaa.netconf.api.messages.EditConfigErrorOptions;
-import org.broadband_forum.obbaa.netconf.api.messages.EditConfigRequest;
-import org.broadband_forum.obbaa.netconf.api.messages.EditConfigTestOptions;
-import org.broadband_forum.obbaa.netconf.api.messages.GetConfigRequest;
-import org.broadband_forum.obbaa.netconf.api.messages.GetRequest;
-import org.broadband_forum.obbaa.netconf.api.messages.NetConfResponse;
-import org.broadband_forum.obbaa.netconf.api.messages.NetconfNotification;
-import org.broadband_forum.obbaa.netconf.api.messages.NetconfRpcError;
-import org.broadband_forum.obbaa.netconf.api.messages.NetconfRpcErrorSeverity;
-import org.broadband_forum.obbaa.netconf.api.messages.NetconfRpcErrorTag;
-import org.broadband_forum.obbaa.netconf.api.messages.NetconfRpcErrorType;
-import org.broadband_forum.obbaa.netconf.api.messages.Notification;
+import org.broadband_forum.obbaa.netconf.api.messages.*;
 import org.broadband_forum.obbaa.netconf.api.util.DocumentUtils;
 import org.broadband_forum.obbaa.netconf.api.util.NetconfMessageBuilderException;
 import org.broadband_forum.obbaa.netconf.api.util.Pair;
 import org.broadband_forum.obbaa.netconf.mn.fwk.server.model.SubSystemValidationException;
 import org.broadband_forum.obbaa.nm.requestmanager.RequestFunctionManager;
-import org.opendaylight.yangtools.yang.common.QName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.broadband_forum.obbaa.dhcp.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +41,7 @@ import java.util.concurrent.Future;
 public class ZyxelModelDeviceInterface implements DeviceInterface {
     private static final Logger LOGGER = LoggerFactory.getLogger(ZyxelModelDeviceInterface.class);
     private NetconfConnectionManager m_ncm;
-   // private VOLTDhcpManagement voltManagement;
+    // private VOLTDhcpManagement voltManagement;
     private RequestFunctionManager requestFunctionManager;
     public static final String IETF_ALARM_NS = "urn:ietf:params:xml:ns:yang:ietf-alarms";
 
